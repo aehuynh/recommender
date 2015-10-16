@@ -6,7 +6,7 @@ import numpy as np
 import random
 
 class Cluster(object):
-    """A cluster object made for K Means clustering.
+    """A Cluster object used for K Means clustering.
     """
 
     def __init__(self, cluster_id):
@@ -84,12 +84,12 @@ class KMeansRecommender(Recommender):
         # Run k means clustering and assign items to clusters
         clusters, assigned_cluster = self.kmeans(self._inv_pref_matrix)
         self._item_clusters = clusters
-        self._user_assigned_cluster = assigned_cluster
+        self._item_assigned_cluster = assigned_cluster
 
     def _create_preference_matrix(self, users, items):
         matrix_data = [[0] * (len(items) + 1)]
         for user in sorted(users, key=lambda user: user.get_id()):
-            row = [0] * (135887 + 1)
+            row = [0] * (len(items) + 1)
             for item_id, rating in user.get_preferences().items():
                 row[item_id] = rating
 
@@ -147,13 +147,45 @@ class KMeansRecommender(Recommender):
 
 
     def similar_items(self, item_id, n=10):
-        # TODO
-        return self._items_cluster.get_members[:n]
+        """Gets the highest rated items in item_id's cluster
+        """
+        items_with_ratings = []
 
-    def similar_users(self, user_id):
-        # TODO
-        return self._items_cluster.get_members[:n]
+        # Get average rating of items by summing up every rating and dividing
+        # by the # of ratings
+        for i in self._item_assigned_cluster[item_id].get_members():
+            if i != item_id:
+                rating_sum = reduce(lambda x,y: x + y, self._inv_pref_matrix[i]
+                items_with_ratings.append((rating_sum / len(self._inv_pref_matrix[i]), i, self._items[i].get_value()))
 
-    def recommendations(self, user_id):
-        # TODO
-        return self._items_cluster.get_members[:n]
+        items_with_ratings.sort(reverse=True)
+
+        return items_with_ratings[:n]
+
+    def similar_users(self, user_id, n=10):
+        """Gets random users in user_id's cluster
+        """
+        # Get members of user_id's cluster without user_id
+        user_ids = [u_id for u_id in self._user_assigned_cluster[user_id].get_members() if u_id != user_id]
+
+        return random.sample(user_ids, n)
+
+    def recommendations(self, user_id, n=10):
+        # Get average rating of items by only using ratings of users in
+        # user_id's cluster
+        user_pref = self._users[user_id].get_preferences()
+        rating_sum = defaultdict(float)
+        rating_count = defaultdict(int)
+
+        for u_id in self._user_cluster.get_members[user_id]:
+            for item_id, rating in self._users[u_id].get_preferences().items():
+
+                # Only add items that haven't been rated by the user
+                if u_id != user_id and item_id not in user_pref:
+                    rating_sum[item_id] += rating
+                    rating_count[item_id] += 1
+
+        # Create list of items with their average rating within cluster
+        results = [(total / rating_count[item_id], item_id, self._items[i].get_value()) for item_id, total in rating_sum.items()]
+
+        return results[:n]
