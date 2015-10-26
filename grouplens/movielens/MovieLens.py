@@ -52,13 +52,13 @@ class MovieLens(GroupLens):
 
 
     def get_recommender_items(self):
-        """Converts self._movies into recommender.models.Item objects.
-        """
+        """Converts self._movies into recommender.models.Item objects."""
+
         return [RecommenderItem(movie.get_id(), repr(movie)) for movie in self._movies.values()]
 
     def get_recommender_users(self):
-        """Converts self._ratings into recommender.models.User objects.
-        """
+        """Converts self._ratings into recommender.models.User objects."""
+
         user_ids = set(rating.get_user_id() for rating in self._ratings)
         recommender_users = {user_id: RecommenderUser(user_id, user_id) for user_id in user_ids}
 

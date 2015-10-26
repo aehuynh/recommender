@@ -1,6 +1,5 @@
 class User:
-    """Bare minimum User object for collaborative filtering.
-    """
+    """Bare minimum User object for collaborative filtering."""
 
     def __init__(self, user_id, value):
         self._id = user_id
@@ -23,8 +22,7 @@ class User:
         self._preferences[item_id] = weight
 
 class Item:
-    """Bare minimum Item object for collaborative filtering.
-    """
+    """Bare minimum Item object for collaborative filtering."""
 
     def __init__(self, item_id, value):
         self._id = item_id

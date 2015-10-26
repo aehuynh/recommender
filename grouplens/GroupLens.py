@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
 
 class GroupLens(metaclass=ABCMeta):
-    """Interface for all GroupLens datasets.
-    """
+    """Interface for all GroupLens datasets."""
+
     @abstractmethod
     def load_from_dir(self, dir_name):
         raise NotImplementedError

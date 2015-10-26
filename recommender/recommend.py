@@ -5,37 +5,31 @@ from recommender.similarity import PearsonSimilarity
 
 
 class Recommender(metaclass=ABCMeta):
-    """Interface for all collaborative filtering recommenders.
-    """
+    """Interface for all collaborative filtering recommenders."""
 
     @abstractmethod
     def load(self, users, items):
-        """Processes users and items for recommendations and similarity.
-        """
+        """Processes users and items for recommendations and similarity."""
         raise NotImplementedError
 
     @abstractmethod
     def similar_users(self, user_id):
-        """Returns similar users to user with user_id.
-        """
+        """Returns similar users to user with user_id."""
         raise NotImplementedError
 
     @abstractmethod
     def similar_items(self, item_id):
-        """Returns similar items to item with item_id.
-        """
+        """Returns similar items to item with item_id."""
         raise NotImplementedError
 
     @abstractmethod
     def recommendations(self, user_id):
-        """Returns item recommendations for user.
-        """
+        """Returns item recommendations for user."""
         raise NotImplementedError
 
 
 class WeightedSimilarityRecommender(Recommender):
-    """A collaborative recommender based on weighted similarity vectors.
-    """
+    """A collaborative recommender based on weighted similarity vectors."""
 
     def __init__(self, memorize=False):
         self._memorize = memorize
@@ -118,19 +112,35 @@ class ItemBasedRecommender(WeightedSimilarityRecommender):
 
     def recommendations(self, user_id, n=10):
         """Recommend items based on item similarities.
+
+        It uses the item ratings of this particular user and the similarity
+        score between the rated items and other items to score the other items.
+
+        Let:
+        k = item rated by user with user_id
+        g = item not rated by user with user_id
+        s = similarity score between k and g
+
+        score of g = sum for all k(s * rating of k) / sum for all k(s)
         """
 
+        # sum for all k(s * rating of k)
         weighted_scores = defaultdict(int)
+        # sum for all k(s)
         total_weight = defaultdict(int)
 
         for item_id, rating in self._preferences[user_id].items():
+            # Get similarity scores for item_id to all other items
             similarities = self._similar(self._inverted_preferences, item_id)
+
+            # Add to the score of the other items
             for score, item_id2 in similarities:
                 if item_id2 in self._preferences[user_id] or score == 0:
                     continue
                 weighted_scores[item_id2] += rating * score
                 total_weight[item_id2] +=  abs(score)
 
+        # List of items with recommendation scores
         ranked_items = [(score / total_weight[item_id], item_id) for item_id, score in weighted_scores.items()]
         ranked_items.sort(reverse=True)
 
@@ -148,8 +158,7 @@ class UserBasedRecommender(WeightedSimilarityRecommender):
         self._similarity = PearsonSimilarity()
 
     def recommendations(self, user_id, n=10):
-        """Recommend items based on user similarities.
-        """
+        """Recommend items based on user similarities."""
 
         weighted_scores = defaultdict(int)
         total_weight = defaultdict(int)
